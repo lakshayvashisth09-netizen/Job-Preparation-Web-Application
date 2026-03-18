@@ -6,7 +6,7 @@ import interviewRouter from "./routes/interview.routes.js";
 
 const app = express();
 app.use(cors({
-  origin: "https://classy-maamoul-5ee46a.netlify.app",
+origin: [/netlify\.app$/, "https://classy-maamoul-5ee46a.netlify.app"],
   credentials: true
 }));
 app.use(express.json());
