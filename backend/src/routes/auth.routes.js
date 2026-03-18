@@ -1,35 +1,35 @@
-import { Router } from "express";
-import { registerUserController, loginUserController, logoutUserController, getMeController } from "../controllers/auth.controllers.js";
-import { Blacklist } from "../models/blacklist.model.js";
-import { authMiddleware } from "../middlewares/auth.middleware.js";
+import express from 'express';
+import authRoutes from "./routes/auth.routes.js";
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import interviewRouter from "./routes/interview.routes.js";
 
-const router = Router();
-/**
- * @route POST /api/auth/register
- * @description Register a new user
- * @access Public
- */
-router.post("/register", registerUserController);
-/**
- * @route POST /api/auth/login
- * @description Login a user
- * @access Public
- */
-router.post("/login", loginUserController);
+const app = express();
 
-/**
- * @route POST /api/auth/logout
- * @description Logout a user
- * @access Public
- */
-router.get("/logout", logoutUserController);
+// 1. CORS Fix: Netlify ka URL bina extra slash ke
+app.use(cors({
+  origin: "https://classy-maamoul-5ee46a.netlify.app",
+  credentials: true
+}));
 
-/**
- * @route GET /api/auth/get-me
- * @description Get current user's information
- * @access Private
- */
-router.get("/get-me", authMiddleware, getMeController);
+app.use(express.json());
+app.use(cookieParser());
 
-export default router;
- 
+// 2. Standard Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/interview", interviewRouter);
+
+// 3. JUGAD ROUTES (Frontend ki galti sudhaarne ke liye)
+// Agar frontend bina /api/auth ke call kare toh ye handle karega
+app.use("/login", authRoutes);
+app.use("/register", authRoutes);
+app.use("/logout", authRoutes);
+
+// 4. SPECIAL FIX: Frontend POST bhej raha hai get-me ke liye, backend GET mang raha hai
+// Ye route dono ko match karwa dega
+app.all("/get-me", (req, res, next) => {
+    req.url = "/get-me"; // Internal redirect to auth routes
+    next();
+}, authRoutes);
+
+export default app;
